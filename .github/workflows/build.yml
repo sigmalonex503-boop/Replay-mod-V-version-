@@ -1,0 +1,56 @@
+name: Build Replay Mod
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Download repository
+        uses: actions/checkout@v4
+
+      - name: Extract Replay source
+        shell: pwsh
+        run: |
+          Expand-Archive -Path "ReplayCore-Levi-v0.1-source.zip" -DestinationPath "source" -Force
+
+      - name: Download Levi Launcher SDK
+        uses: actions/checkout@v4
+        with:
+          repository: LiteLDev/LeviLaunchroid
+          path: upstream
+
+      - name: Prepare project
+        shell: pwsh
+        run: |
+          $src = "source/ReplayCore-Levi"
+          $dest = "upstream/examples/full-cpp-mod"
+
+          if (!(Test-Path "$src/build.ps1")) {
+            throw "Replay source or build.ps1 was not found."
+          }
+
+          Remove-Item -Recurse -Force $dest
+          New-Item -ItemType Directory -Path $dest | Out-Null
+          Copy-Item "$src/*" $dest -Recurse -Force
+          Copy-Item "$src/.github" $dest -Recurse -Force
+
+      - name: Build LeviPack
+        shell: pwsh
+        run: |
+          Set-Location upstream
+          .\examples\full-cpp-mod\build.ps1 -Clean
+
+      - name: Upload build result
+        uses: actions/upload-artifact@v4
+        with:
+          name: ReplayCore-LeviPack
+          path: upstream/examples/full-cpp-mod/dist/arm64-v8a/*.levipack
+          if-no-files-found: error
