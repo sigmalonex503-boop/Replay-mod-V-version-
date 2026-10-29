@@ -3,7 +3,8 @@ name: Build Replay Mod
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -26,6 +27,7 @@ jobs:
         with:
           repository: LiteLDev/LeviLaunchroid
           path: upstream
+          submodules: recursive
 
       - name: Prepare project
         shell: pwsh
@@ -37,7 +39,10 @@ jobs:
             throw "Replay source or build.ps1 was not found."
           }
 
-          Remove-Item -Recurse -Force $dest
+          if (Test-Path $dest) {
+            Remove-Item -Recurse -Force $dest
+          }
+
           New-Item -ItemType Directory -Path $dest | Out-Null
           Copy-Item "$src/*" $dest -Recurse -Force
           Copy-Item "$src/.github" $dest -Recurse -Force
