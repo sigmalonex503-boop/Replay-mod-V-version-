@@ -27,7 +27,16 @@ jobs:
         with:
           repository: LiteLDev/LeviLaunchroid
           path: upstream
-          submodules: recursive
+          submodules: false
+
+      - name: Download required Preloader
+        shell: pwsh
+        run: |
+          git -C upstream config core.longpaths true
+          git -C upstream submodule update --init app/src/main/cpp/preloader
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to download the required Preloader."
+          }
 
       - name: Prepare project
         shell: pwsh
